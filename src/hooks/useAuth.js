@@ -13,30 +13,25 @@ export const AuthProvider = ({ children }) => {
 
     // Function to handle Google Sign In
     const signInWithGoogle = useCallback(async () => {
-        setLoading(true);
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/app`, // Explicit redirect
+                    redirectTo: `${window.location.origin}/app`,
                 },
             });
             if (error) {
                 console.error('Error signing in with Google:', error.message);
                 alert(`Google Sign-In Error: ${error.message}`);
-                setLoading(false);
             }
-            // Don't set loading to false here - let the auth state change handle it
         } catch (error) {
             console.error('Unexpected error during Google sign-in:', error);
             alert('An unexpected error occurred during sign-in.');
-            setLoading(false);
         }
     }, []);
 
     // Function to handle Sign Out
     const signOut = useCallback(async () => {
-        setLoading(true);
         try {
             const { error } = await supabase.auth.signOut();
             if (error) {
@@ -46,8 +41,6 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             console.error('Unexpected error during sign-out:', error);
             alert('An unexpected error occurred during sign-out.');
-        } finally {
-            setLoading(false);
         }
     }, []);
 
@@ -63,7 +56,6 @@ export const AuthProvider = ({ children }) => {
                 if (error) {
                     console.error("Error getting initial session:", error);
                 } else if (isMounted) {
-                    console.log("Initial session check:", !!initialSession, initialSession?.user?.id);
                     setSession(initialSession);
                     setUser(initialSession?.user ?? null);
                 }
@@ -82,22 +74,10 @@ export const AuthProvider = ({ children }) => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, currentSession) => {
                 if (isMounted) {
-                    console.log("Auth State Change:", event, !!currentSession, currentSession?.user?.id);
+                    console.log("Auth State Change:", event, !!currentSession);
                     setSession(currentSession);
                     setUser(currentSession?.user ?? null);
                     setLoading(false);
-                    
-                    // Handle successful sign in
-                    if (event === 'SIGNED_IN' && currentSession) {
-                        console.log("User signed in successfully");
-                        // The middleware will handle the redirect
-                    }
-                    
-                    // Handle sign out
-                    if (event === 'SIGNED_OUT') {
-                        console.log("User signed out");
-                        // Clear any cached data if needed
-                    }
                 }
             }
         );
@@ -105,7 +85,6 @@ export const AuthProvider = ({ children }) => {
         return () => {
             isMounted = false;
             subscription?.unsubscribe();
-            console.log("Auth listener unsubscribed.");
         };
     }, []);
 

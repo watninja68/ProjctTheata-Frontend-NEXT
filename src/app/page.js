@@ -12,7 +12,7 @@ export default function Home() {
   useEffect(() => {
     // If user is authenticated, redirect to app
     if (user && !loading) {
-      router.push('/app');
+      router.replace('/app');
     }
   }, [user, loading, router]);
 

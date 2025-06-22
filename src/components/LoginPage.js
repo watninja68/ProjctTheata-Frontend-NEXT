@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaGoogle, FaSpinner } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
@@ -9,6 +9,7 @@ import './LoginPage.css';
 const LoginPage = () => {
     const { user, loading, signInWithGoogle } = useAuth();
     const router = useRouter();
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
     useEffect(() => {
         // Apply theme from localStorage for standalone LoginPage
@@ -21,34 +22,28 @@ const LoginPage = () => {
 
         // Ensure body scrolling is enabled for the login page
         document.body.classList.remove('no-scroll');
+    }, []);
 
-        // Only redirect if we have a user and we're not loading
-        if (user && !loading) {
-            console.log("User logged in on LoginPage, redirecting to /app");
-            // Use replace to avoid back button issues
-            router.replace('/app');
+    useEffect(() => {
+        // Only redirect if we have a user and we're not already loading/redirecting
+        if (user && !loading && !isRedirecting) {
+            console.log("User authenticated, redirecting to /app");
+            setIsRedirecting(true);
+            
+            // Small delay to prevent flash, then redirect
+            setTimeout(() => {
+                router.replace('/app');
+            }, 100);
         }
-    }, [user, loading, router]);
+    }, [user, loading, router, isRedirecting]);
 
-    // Show loading state while checking auth
-    if (loading) {
+    // Show loading state while checking auth or redirecting
+    if (loading || isRedirecting) {
         return (
             <div className="login-page-container">
                 <div className="login-box">
                     <FaSpinner className="fa-spin" size={50} />
-                    <p>Loading Authentication...</p>
-                </div>
-            </div>
-        );
-    }
-
-    // If user is authenticated, show a brief message before redirect
-    if (user) {
-        return (
-            <div className="login-page-container">
-                <div className="login-box">
-                    <FaSpinner className="fa-spin" size={50} />
-                    <p>Redirecting to app...</p>
+                    <p>{isRedirecting ? 'Redirecting to app...' : 'Loading Authentication...'}</p>
                 </div>
             </div>
         );
@@ -66,7 +61,7 @@ const LoginPage = () => {
                     disabled={loading}
                 >
                     <FaGoogle style={{ marginRight: '10px' }} />
-                    {loading ? 'Processing...' : 'Login with Google'}
+                    Login with Google
                 </button>
                 <p style={{ marginTop: '20px', fontSize: '0.9em' }}>
                     <a href="/" style={{ color: 'var(--accent-primary)' }}>Back to Home</a>

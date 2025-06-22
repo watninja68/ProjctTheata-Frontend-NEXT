@@ -2,53 +2,61 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 
 export async function middleware(req) {
+  // Skip middleware for static files and API routes
+  if (
+    req.nextUrl.pathname.startsWith('/_next') ||
+    req.nextUrl.pathname.startsWith('/api') ||
+    req.nextUrl.pathname.includes('.')
+  ) {
+    return NextResponse.next();
+  }
+
   const res = NextResponse.next();
   
-  // Create Supabase client for server-side
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        get: (name) => req.cookies.get(name)?.value,
-        set: (name, value, options) => {
-          res.cookies.set(name, value, options);
+  try {
+    // Create Supabase client for server-side
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          get: (name) => req.cookies.get(name)?.value,
+          set: (name, value, options) => {
+            res.cookies.set(name, value, options);
+          },
+          remove: (name, options) => {
+            res.cookies.set(name, '', { ...options, maxAge: 0 });
+          },
         },
-        remove: (name, options) => {
-          res.cookies.set(name, '', { ...options, maxAge: 0 });
-        },
-      },
+      }
+    );
+
+    // Get session from Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+
+    const isAuthPage = req.nextUrl.pathname === '/login';
+    const isAppPage = req.nextUrl.pathname.startsWith('/app');
+    const isHomePage = req.nextUrl.pathname === '/';
+
+    // If no session and trying to access protected routes, redirect to login
+    if (!session && isAppPage) {
+      const loginUrl = new URL('/login', req.url);
+      return NextResponse.redirect(loginUrl);
     }
-  );
 
-  // Get session from Supabase
-  const { data: { session }, error } = await supabase.auth.getSession();
+    // If has session and on login page, redirect to app
+    if (session && isAuthPage) {
+      const appUrl = new URL('/app', req.url);
+      return NextResponse.redirect(appUrl);
+    }
 
-  // Log for debugging
-  console.log('Middleware - Path:', req.nextUrl.pathname);
-  console.log('Middleware - Session exists:', !!session);
-  console.log('Middleware - Session user:', session?.user?.id);
-
-  // If no session and user is trying to access /app, redirect to /login
-  if (!session && req.nextUrl.pathname.startsWith('/app')) {
-    console.log('Middleware - Redirecting to /login (no session)');
-    const url = req.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
+    return res;
+  } catch (error) {
+    console.error('Middleware error:', error);
+    return NextResponse.next();
   }
-
-  // If there IS a session and user is on /login, redirect to /app
-  if (session && req.nextUrl.pathname === '/login') {
-    console.log('Middleware - Redirecting to /app (has session)');
-    const url = req.nextUrl.clone();
-    url.pathname = '/app';
-    return NextResponse.redirect(url);
-  }
-
-  return res;
 }
 
-// Configure the middleware to run only on specific paths
 export const config = {
   matcher: [
     /*
@@ -57,8 +65,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder files
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
