@@ -22,15 +22,16 @@ const LoginPage = () => {
         // Ensure body scrolling is enabled for the login page
         document.body.classList.remove('no-scroll');
 
+        // Only redirect if we have a user and we're not loading
         if (user && !loading) {
-            // If user is logged in and we are on the login page, redirect them to app
             console.log("User logged in on LoginPage, redirecting to /app");
-            router.push('/app');
+            // Use replace to avoid back button issues
+            router.replace('/app');
         }
     }, [user, loading, router]);
 
-    // Handle initial loading state from useAuth or after triggering signInWithGoogle
-    if (loading && !user) {
+    // Show loading state while checking auth
+    if (loading) {
         return (
             <div className="login-page-container">
                 <div className="login-box">
@@ -41,7 +42,19 @@ const LoginPage = () => {
         );
     }
 
-    // This UI is primarily for when the user is not logged in and auth is not loading.
+    // If user is authenticated, show a brief message before redirect
+    if (user) {
+        return (
+            <div className="login-page-container">
+                <div className="login-box">
+                    <FaSpinner className="fa-spin" size={50} />
+                    <p>Redirecting to app...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Show login form for non-authenticated users
     return (
         <div className="login-page-container">
             <div className="login-box">
@@ -50,12 +63,11 @@ const LoginPage = () => {
                 <button
                     onClick={signInWithGoogle}
                     className="login-button google-login"
-                    disabled={loading} // 'loading' is true during Google sign-in process
+                    disabled={loading}
                 >
                     <FaGoogle style={{ marginRight: '10px' }} />
                     {loading ? 'Processing...' : 'Login with Google'}
                 </button>
-                {/* You can add more login options or a link to the landing page here */}
                 <p style={{ marginTop: '20px', fontSize: '0.9em' }}>
                     <a href="/" style={{ color: 'var(--accent-primary)' }}>Back to Home</a>
                 </p>

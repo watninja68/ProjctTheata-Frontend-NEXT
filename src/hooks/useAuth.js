@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
-import { supabase } from '../lib/supabase/client'; // Import your Supabase client
+import { supabase } from '../lib/supabase/client';
 
 // Create the Auth Context
 const AuthContext = createContext(null);
@@ -9,7 +9,7 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
     const [session, setSession] = useState(null);
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true); // Start loading until initial check is done
+    const [loading, setLoading] = useState(true);
 
     // Function to handle Google Sign In
     const signInWithGoogle = useCallback(async () => {
@@ -17,16 +17,16 @@ export const AuthProvider = ({ children }) => {
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
-                // Optional: Specify redirect URL if needed, defaults work for most cases
-                // options: {
-                //   redirectTo: window.location.origin, // Redirect back to your app
-                // },
+                options: {
+                    redirectTo: `${window.location.origin}/app`, // Explicit redirect
+                },
             });
             if (error) {
                 console.error('Error signing in with Google:', error.message);
                 alert(`Google Sign-In Error: ${error.message}`);
+                setLoading(false);
             }
-            // setLoading(false) will be handled by onAuthStateChange
+            // Don't set loading to false here - let the auth state change handle it
         } catch (error) {
             console.error('Unexpected error during Google sign-in:', error);
             alert('An unexpected error occurred during sign-in.');
@@ -43,59 +43,71 @@ export const AuthProvider = ({ children }) => {
                 console.error('Error signing out:', error.message);
                 alert(`Sign Out Error: ${error.message}`);
             }
-            // State updates (session, user) will be handled by onAuthStateChange
         } catch (error) {
             console.error('Unexpected error during sign-out:', error);
             alert('An unexpected error occurred during sign-out.');
         } finally {
-            setLoading(false); // Ensure loading is false after sign out attempt
+            setLoading(false);
         }
     }, []);
 
     // Effect to get the initial session and listen for auth changes
     useEffect(() => {
-        setLoading(true);
-        let isMounted = true; // Track component mount status
+        let isMounted = true;
 
-        // 1. Get initial session data
-        supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-            // Only update state if the component is still mounted
-            if (isMounted) {
-                setSession(initialSession);
-                setUser(initialSession?.user ?? null);
-                console.log("Initial session check:", initialSession);
-                // We don't set loading to false here yet, let the listener handle it
-                // or set it after listener setup if needed
+        // Get initial session
+        const getInitialSession = async () => {
+            try {
+                const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    console.error("Error getting initial session:", error);
+                } else if (isMounted) {
+                    console.log("Initial session check:", !!initialSession, initialSession?.user?.id);
+                    setSession(initialSession);
+                    setUser(initialSession?.user ?? null);
+                }
+            } catch (error) {
+                console.error("Error getting initial session:", error);
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
-        }).catch(error => {
-            console.error("Error getting initial session:", error);
-            if (isMounted) {
-                setLoading(false); // Set loading false on error too
-            }
-        });
+        };
 
-        // 2. Listen for future auth state changes
-        // *** FIX: Correctly destructure 'subscription' from 'data' ***
+        getInitialSession();
+
+        // Listen for auth state changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (_event, currentSession) => {
-                // Only update state if the component is still mounted
-                 if (isMounted) {
-                    console.log("Auth State Change Detected:", _event, currentSession);
+            async (event, currentSession) => {
+                if (isMounted) {
+                    console.log("Auth State Change:", event, !!currentSession, currentSession?.user?.id);
                     setSession(currentSession);
                     setUser(currentSession?.user ?? null);
-                    setLoading(false); // Auth state confirmed/updated, stop loading
-                 }
+                    setLoading(false);
+                    
+                    // Handle successful sign in
+                    if (event === 'SIGNED_IN' && currentSession) {
+                        console.log("User signed in successfully");
+                        // The middleware will handle the redirect
+                    }
+                    
+                    // Handle sign out
+                    if (event === 'SIGNED_OUT') {
+                        console.log("User signed out");
+                        // Clear any cached data if needed
+                    }
+                }
             }
         );
 
-        // Cleanup listener on component unmount
         return () => {
-            isMounted = false; // Mark as unmounted
-            // *** FIX: Call unsubscribe on the 'subscription' object ***
+            isMounted = false;
             subscription?.unsubscribe();
             console.log("Auth listener unsubscribed.");
         };
-    }, []); // Empty dependency array ensures this runs only once on mount
+    }, []);
 
     const value = {
         session,
@@ -105,9 +117,6 @@ export const AuthProvider = ({ children }) => {
         signOut,
     };
 
-    // Render children within the provider, passing the auth state/functions
-    // Render null or a loading indicator while loading to prevent downstream issues
-    // or render children conditionally: { !loading && children }
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
