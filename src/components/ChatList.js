@@ -1,62 +1,28 @@
+"use client";
+
 import React, { useState, useEffect, useCallback } from "react";
 import {
   FaCrown,
   FaTrash,
   FaEdit,
   FaSpinner,
-  FaCommentDots, // Added for collapse button
-  FaBars,    
-  FaAngleDoubleLeft    // Added for collapse button
+  FaCommentDots,
 } from "react-icons/fa";
-import { IoIosAdd } from "react-icons/io";
 import ChatService from "../services/chatService";
 import { useAuth } from "../hooks/useAuth";
 import "./ChatList.css";
 
-// Added toggleCollapse to props
-const ChatList = ({ onChatSelect, selectedChatId, onCreateChat, isCollapsed, toggleCollapse }) => {
+const ChatList = ({ 
+  onChatSelect, 
+  selectedChatId, 
+  chats = [], 
+  loading = false, 
+  error = null,
+  onChatsUpdate 
+}) => {
   const { user } = useAuth();
-  const [chats, setChats] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [editingChatId, setEditingChatId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
-
-  // FIX #1: The main data fetching effect.
-  // This now ONLY depends on the user, so it will only run once when the user logs in.
-  // This completely stops the infinite loop.
-  const loadChats = useCallback(async () => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await ChatService.getChats(user.id);
-      const fetchedChats = response.chats || [];
-      setChats(fetchedChats);
-
-      // Handle auto-selection or creation in a separate effect
-      // to avoid re-fetching data.
-      if (!selectedChatId && fetchedChats.length > 0) {
-        onChatSelect(fetchedChats[0]);
-      } else if (fetchedChats.length === 0) {
-        // You might want to automatically create a chat here if that's the desired UX
-        // onCreateChat(); 
-      }
-    } catch (err)
-    {
-      console.error("Failed to load chats:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, selectedChatId, onChatSelect]); // Dependencies are now more stable
-
-  useEffect(() => {
-    loadChats();
-  }, [selectedChatId]); 
 
   const handleDeleteChat = async (idOfChatToDelete, event) => {
     event.stopPropagation();
@@ -67,11 +33,9 @@ const ChatList = ({ onChatSelect, selectedChatId, onCreateChat, isCollapsed, tog
     try {
       await ChatService.deleteChat(idOfChatToDelete, user.id);
       const remainingChats = chats.filter((c) => c.id !== idOfChatToDelete);
-      setChats(remainingChats);
+      onChatsUpdate(remainingChats);
       
-      // FIX #2: Explicitly check if the DELETED chat was the SELECTED one.
       if (selectedChatId === idOfChatToDelete) {
-        // If it was, select the first of the remaining chats, or null if none are left.
         onChatSelect(remainingChats.length > 0 ? remainingChats[0] : null);
       }
     } catch (err) {
@@ -88,7 +52,10 @@ const ChatList = ({ onChatSelect, selectedChatId, onCreateChat, isCollapsed, tog
     }
     try {
       await ChatService.updateChat(chatId, { title: editTitle, user_id: user.id });
-      setChats(chats.map(c => c.id === chatId ? {...c, title: editTitle} : c));
+      const updatedChats = chats.map(c => 
+        c.id === chatId ? {...c, title: editTitle} : c
+      );
+      onChatsUpdate(updatedChats);
       setEditingChatId(null);
     } catch (err) {
       console.error("Failed to update chat:", err);
@@ -140,7 +107,6 @@ const ChatList = ({ onChatSelect, selectedChatId, onCreateChat, isCollapsed, tog
       return (
         <div className="chat-list-error">
           <p>Error: {error}</p>
-          <button onClick={loadChats} className="retry-btn">Retry</button>
         </div>
       );
     }
@@ -208,36 +174,7 @@ const ChatList = ({ onChatSelect, selectedChatId, onCreateChat, isCollapsed, tog
     ));
   };
   
-  return (
-    <div className={`conversation-history-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-        {/* Updated header to include collapse button and match desired structure */}
-        <div className="chat-list-header"> 
-          <h4>Conversations</h4> {/* Added Heading */}
-          {/* Collapse button - using sidebar-toggle-btn for potential style reuse */}
-          <button 
-            onClick={toggleCollapse} 
-            className="sidebar-toggle-btn" 
-            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          >
-            {isCollapsed ? <FaBars size={20} /> : <FaAngleDoubleLeft size={24} />}
-          </button>
-        </div>
-
-        {/* Separator Line - MOVED UP */}
-        <hr className="sidebar-separator" />
-
-        {/* New "New Conversation" button - MOVED DOWN */}
-        <button onClick={onCreateChat} className="new-conversation-btn" disabled={loading}>
-          <IoIosAdd size={20} style={{ marginRight: '0.7rem' }} />
-          <span>New Conversation</span>
-        </button>
-
-        {/* Renamed chat-list-scroll-area to conv-history-list for CSS consistency */}
-        <div className="conv-history-list">
-            {renderContent()}
-        </div>
-    </div>
-  );
+  return renderContent();
 };
 
 export default ChatList;

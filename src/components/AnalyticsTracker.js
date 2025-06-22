@@ -1,41 +1,40 @@
+"use client";
+
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { usePathname } from "next/navigation";
 import ReactGA4 from "react-ga4";
 
-const GA_MEASUREMENT_ID = process.env.REACT_APP_GA_MEASUREMENT_ID;
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 const AnalyticsTracker = () => {
-  const location = useLocation();
+  const pathname = usePathname();
 
   // Effect for initialization (runs once on mount)
   useEffect(() => {
     if (GA_MEASUREMENT_ID) {
-      // Check if already initialized (e.g., due to strict mode double invoke in dev)
       if (!ReactGA4.isInitialized) {
         ReactGA4.initialize(GA_MEASUREMENT_ID);
       }
     } else {
       console.warn(
-        "Google Analytics Measurement ID (REACT_APP_GA_MEASUREMENT_ID) is not set. Tracking will be disabled.",
+        "Google Analytics Measurement ID (NEXT_PUBLIC_GA_MEASUREMENT_ID) is not set. Tracking will be disabled.",
       );
     }
-  }, []); // Empty dependency array: runs only once on mount.
+  }, []);
 
-  // Effect for tracking page views (runs on location change after initialization)
+  // Effect for tracking page views (runs on pathname change after initialization)
   useEffect(() => {
-    if (GA_MEASUREMENT_ID && ReactGA4.isInitialized) {
+    if (GA_MEASUREMENT_ID && ReactGA4.isInitialized && pathname) {
       ReactGA4.send({
         hitType: "pageview",
-        page: location.pathname + location.search + location.hash, // include hash for better SPA tracking
-        title: document.title, // Uses the current document title
+        page: pathname,
+        title: document.title,
       });
-      console.log(
-        `GA Pageview Sent: ${location.pathname + location.search + location.hash}`,
-      );
+      console.log(`GA Pageview Sent: ${pathname}`);
     }
-  }, [location]); // Runs on initial mount (after init effect) and whenever location changes.
+  }, [pathname]);
 
-  return null; // This component does not render anything visible
+  return null;
 };
 
 export default AnalyticsTracker;

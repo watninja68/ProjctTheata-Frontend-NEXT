@@ -1,5 +1,7 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import Link from "next/link";
 import {
     FaAtom,
     FaSignInAlt,
@@ -14,7 +16,6 @@ import {
     FaQuoteRight,
     FaRegSmile,
     FaBrain,
-    // --- New icons for the enhanced footer ---
     FaTwitter,
     FaLinkedin,
     FaGithub,
@@ -29,7 +30,6 @@ const THEME_LIGHT = "light";
 const LandingPage = () => {
     const [isDarkMode, setIsDarkMode] = useState(true);
     const { user } = useAuth();
-    const navigate = useNavigate();
 
     useEffect(() => {
         document.documentElement.setAttribute(
@@ -37,10 +37,6 @@ const LandingPage = () => {
             isDarkMode ? THEME_DARK : THEME_LIGHT,
         );
     }, [isDarkMode]);
-
-    // const toggleTheme = () => { // If you want a theme toggle in the footer too
-    //     setIsDarkMode(!isDarkMode);
-    // };
 
     return (
         <div className={`landing-page ${isDarkMode ? "dark-mode" : "light-mode"}`}>
@@ -60,12 +56,12 @@ const LandingPage = () => {
                     <a href="#testimonials">Testimonials</a>
 
                     {user ? (
-                        <Link to="./app" className="cta-button-go-to">
+                        <Link href="/app" className="cta-button-go-to">
                             Open App
                             <FaRocket style={{ marginLeft: "8px" }} aria-hidden="true" />
                         </Link>
                     ) : (
-                        <Link to="/login" className="cta-button">
+                        <Link href="/login" className="cta-button">
                             Login / Get Started{" "}
                             <FaSignInAlt style={{ marginLeft: "8px" }} aria-hidden="true" />
                         </Link>
@@ -89,7 +85,7 @@ const LandingPage = () => {
                             agent orchestrate tools and other agents to get work done—faster,
                             smarter, and with less friction.
                         </p>
-                        <Link to="./app" className="cta-button hero-cta">
+                        <Link href="/app" className="cta-button hero-cta">
                             {user ? "Start Collaborating" : "Try Project Theta Now"}{" "}
                             <FaRocket style={{ marginLeft: "8px" }} aria-hidden="true" />
                         </Link>
@@ -337,7 +333,7 @@ const LandingPage = () => {
                             Start collaborating with your AI agent today. Experience the
                             future of productivity.
                         </p>
-                        <Link to="./app" className="cta-button final-cta">
+                        <Link href="/app" className="cta-button final-cta">
                             {user ? "Go to App" : "Get Started Free"}{" "}
                             <FaRocket style={{ marginLeft: "8px" }} aria-hidden="true" />
                         </Link>
@@ -345,7 +341,7 @@ const LandingPage = () => {
                 </div>
             </main>
 
-            {/* --- ENHANCED FOOTER --- */}
+            {/* ENHANCED FOOTER */}
             <footer className="landing-footer">
                 <div className="footer-container">
                     <div className="footer-main">
@@ -382,7 +378,6 @@ const LandingPage = () => {
                                 <li>
                                     <a href="#testimonials">Testimonials</a>
                                 </li>
-                                {/* <li><Link to="/blog">Blog</Link></li> You can add more links like a blog or FAQ */}
                             </ul>
                         </div>
 
@@ -390,12 +385,11 @@ const LandingPage = () => {
                             <h4>Legal</h4>
                             <ul>
                                 <li>
-                                    <Link to="/privacy-policy">Privacy Policy</Link>
+                                    <Link href="/privacy-policy">Privacy Policy</Link>
                                 </li>
                                 <li>
-                                    <Link to="/terms-of-service">Terms of Service</Link>
+                                    <Link href="/terms-of-service">Terms of Service</Link>
                                 </li>
-                                {/* <li><Link to="/cookie-policy">Cookie Policy</Link></li> */}
                             </ul>
                         </div>
 
@@ -425,23 +419,6 @@ const LandingPage = () => {
                                 >
                                     <FaLinkedin size={22} />
                                 </a>
-                                <br />
-                                <a
-                                    href="https://twitter.com/YourProjectTheta"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="Follow Project Theta on Twitter"
-                                >
-                                    <FaTwitter size={22} />
-                                </a>
-                                <a
-                                    href="https://linkedin.com/company/YourProjectTheta"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="Follow Project Theta on LinkedIn"
-                                >
-                                    <FaLinkedin size={22} />
-                                </a>
                             </div>
                         </div>
                     </div>
@@ -449,10 +426,6 @@ const LandingPage = () => {
                     <div className="footer-secondary">
                         <div className="footer-credits">
                             A project by Karneeshkar & Ashish.
-                            {/* You can make emails clickable if desired, but a general contact is often better for a product.
-                                <a href="mailto:karneeshkar68@gmail.com">Karneeshkar</a> &
-                                <a href="mailto:ashishfounder@email.com">Ashish</a>
-                            */}
                         </div>
                         <p className="footer-copyright">
                             &copy; {new Date().getFullYear()} Project Theta. All Rights

@@ -7,12 +7,12 @@ export class RAGQueryTool {
    */
   constructor(options = {}) {
     // The Qdrant URL now points to your Go backend's proxy endpoint.
-    this.qdrantUrl = `${process.env.REACT_APP_BACKEND_URL || "http://localhost:8080"}/api/qdrant`;
+    this.qdrantUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/qdrant`;
 
     this.googleApiKey = 
-      options.googleApiKey || process.env.REACT_APP_GOOGLE_API_KEY;
+      options.googleApiKey || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     this.openaiApiKey = 
-      options.openaiApiKey || process.env.REACT_APP_OPENAI_API_KEY;
+      options.openaiApiKey || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
 
     // Default configuration
     this.defaultCollectionName = "personal_document_query_system";
@@ -29,13 +29,13 @@ export class RAGQueryTool {
 
     if (!this.googleApiKey) {
       console.warn(
-        "RAGQueryTool: No Google API key provided. Please provide googleApiKey or set REACT_APP_GOOGLE_API_KEY environment variable."
+        "RAGQueryTool: No Google API key provided. Please provide googleApiKey or set NEXT_PUBLIC_GOOGLE_API_KEY environment variable."
       );
     }
 
     if (!this.openaiApiKey) {
       console.warn(
-        "RAGQueryTool: No OpenAI API key provided. Please provide openaiApiKey or set REACT_APP_OPENAI_API_KEY environment variable."
+        "RAGQueryTool: No OpenAI API key provided. Please provide openaiApiKey or set NEXT_PUBLIC_OPENAI_API_KEY environment variable."
       );
     }
   }
