@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    esmExternals: 'loose'
-  },
   webpack: (config, { isServer }) => {
     // Handle audio worklet files
     config.module.rules.push({

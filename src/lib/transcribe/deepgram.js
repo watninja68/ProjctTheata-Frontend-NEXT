@@ -9,7 +9,7 @@ export class DeepgramTranscriber extends EventEmitter { // Extend EventEmitter
     constructor(apiKey, sampleRate) {
         super(); // Call the EventEmitter constructor
 
-        this.apiKey = process.env.REACT_APP_DEEPGRAM_API_KEY;
+        this.apiKey = process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY;
         this.ws = null;
         this.isConnected = false;
         // this.eventListeners = new Map(); // Removed: Inherited from EventEmitter

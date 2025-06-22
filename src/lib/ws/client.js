@@ -17,7 +17,7 @@ export class GeminiWebsocketClient extends EventEmitter {
   constructor(name, url, config) {
     super();
     this.name = name || "WebSocketClient";
-    const apiKey = process.env.REACT_APP_GOOGLE_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     this.url =
       url ||
       `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${apiKey}`;
