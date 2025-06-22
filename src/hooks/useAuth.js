@@ -14,33 +14,44 @@ export const AuthProvider = ({ children }) => {
     // Function to handle Google Sign In
     const signInWithGoogle = useCallback(async () => {
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
+            console.log('Initiating Google OAuth...');
+            const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: `${window.location.origin}/app`,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    }
                 },
             });
+            
             if (error) {
                 console.error('Error signing in with Google:', error.message);
-                alert(`Google Sign-In Error: ${error.message}`);
+                throw error;
             }
+            
+            console.log('OAuth initiated successfully:', data);
         } catch (error) {
             console.error('Unexpected error during Google sign-in:', error);
-            alert('An unexpected error occurred during sign-in.');
+            throw error;
         }
     }, []);
 
     // Function to handle Sign Out
     const signOut = useCallback(async () => {
         try {
+            setLoading(true);
             const { error } = await supabase.auth.signOut();
             if (error) {
                 console.error('Error signing out:', error.message);
-                alert(`Sign Out Error: ${error.message}`);
+                throw error;
             }
         } catch (error) {
             console.error('Unexpected error during sign-out:', error);
-            alert('An unexpected error occurred during sign-out.');
+            throw error;
+        } finally {
+            setLoading(false);
         }
     }, []);
 
@@ -51,11 +62,13 @@ export const AuthProvider = ({ children }) => {
         // Get initial session
         const getInitialSession = async () => {
             try {
+                console.log('Getting initial session...');
                 const { data: { session: initialSession }, error } = await supabase.auth.getSession();
                 
                 if (error) {
                     console.error("Error getting initial session:", error);
                 } else if (isMounted) {
+                    console.log('Initial session:', !!initialSession);
                     setSession(initialSession);
                     setUser(initialSession?.user ?? null);
                 }
@@ -77,7 +90,11 @@ export const AuthProvider = ({ children }) => {
                     console.log("Auth State Change:", event, !!currentSession);
                     setSession(currentSession);
                     setUser(currentSession?.user ?? null);
-                    setLoading(false);
+                    
+                    // Only set loading to false after we've processed the auth change
+                    if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+                        setLoading(false);
+                    }
                 }
             }
         );

@@ -2,19 +2,22 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import LandingPage from "@/components/LandingPage";
 
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
-    // If user is authenticated, redirect to app
-    if (user && !loading) {
+    // If user is authenticated and we haven't redirected yet, redirect to app
+    if (user && !loading && !hasRedirected) {
+      console.log('Home page: User authenticated, redirecting to app');
+      setHasRedirected(true);
       router.replace('/app');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, hasRedirected]);
 
   // Show loading state while checking auth
   if (loading) {

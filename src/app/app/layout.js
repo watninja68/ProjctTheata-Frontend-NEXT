@@ -44,6 +44,14 @@ export default function AppLayout({ children }) {
   // Refs
   const profileMenuRef = useRef(null);
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !session) {
+      console.log('App layout: No session, redirecting to login');
+      router.replace('/login');
+    }
+  }, [session, authLoading, router]);
+
   // Load chats
   const loadChats = useCallback(async () => {
     if (!user) {
@@ -122,7 +130,7 @@ export default function AppLayout({ children }) {
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.push('/');
+      router.replace('/');
     } catch (error) {
       console.error('Sign out error:', error);
     }
@@ -155,8 +163,7 @@ export default function AppLayout({ children }) {
   }
 
   if (!session || !user) {
-    router.push('/login');
-    return null;
+    return null; // Will redirect via useEffect
   }
 
   return (
