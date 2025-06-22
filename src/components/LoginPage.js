@@ -1,13 +1,14 @@
+"use client";
+
 import React, { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { FaGoogle, FaSpinner } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
-import './LoginPage.css'; // We'll create this CSS file next
+import './LoginPage.css';
 
 const LoginPage = () => {
     const { user, loading, signInWithGoogle } = useAuth();
-    const navigate = useNavigate();
-    const location = useLocation();
+    const router = useRouter();
 
     useEffect(() => {
         // Apply theme from localStorage for standalone LoginPage
@@ -22,13 +23,11 @@ const LoginPage = () => {
         document.body.classList.remove('no-scroll');
 
         if (user && !loading) {
-            // If user is logged in and we are on the login page,
-            // redirect them. 'from' will be set by ProtectedRoute.
-            const from = location.state?.from?.pathname || '/app';
-            console.log("User logged in on LoginPage, redirecting to:", from);
-            navigate(from, { replace: true });
+            // If user is logged in and we are on the login page, redirect them to app
+            console.log("User logged in on LoginPage, redirecting to /app");
+            router.push('/app');
         }
-    }, [user, loading, navigate, location.state]);
+    }, [user, loading, router]);
 
     // Handle initial loading state from useAuth or after triggering signInWithGoogle
     if (loading && !user) {
